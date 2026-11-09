@@ -1,16 +1,25 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Mic, MicOff, PhoneOff } from 'lucide-react';
 import { BotAvatarFor } from '../avatar/BotAvatar';
 import { botVars } from '../lib/colors';
 import { useStore } from '../store';
 import { callLevels, endCall, toggleMute, useVoice } from '../voice/call';
 
 function MicGlyph({ off }: { off?: boolean }) {
-  return off ? <MicOff size={16} aria-hidden /> : <Mic size={16} aria-hidden />;
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+      {off && <path d="M4 4l16 16" />}
+    </svg>
+  );
 }
 
 function HangUpGlyph() {
-  return <PhoneOff size={17} aria-hidden />;
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
+      <path fill="currentColor" d="M12 9.5c-2.6 0-5.1.5-7.3 1.6-.7.3-1.2 1-1.2 1.8v2.3c0 .8.7 1.4 1.5 1.3l3-.4c.7-.1 1.2-.7 1.2-1.4v-1.6c1.8-.5 3.8-.5 5.6 0v1.6c0 .7.5 1.3 1.2 1.4l3 .4c.8.1 1.5-.5 1.5-1.3v-2.3c0-.8-.5-1.5-1.2-1.8-2.2-1.1-4.7-1.6-7.3-1.6Z" />
+    </svg>
+  );
 }
 
 const fmt = (ms: number) => {

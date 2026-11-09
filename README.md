@@ -6,7 +6,7 @@ An open-source take on **always-on AI teammates**: a team of named Bots you give
 
 It's inspired by xAI's Grok Bot and built entirely on public APIs: the **xAI Grok API** (`grok-4.7`), **Orgo** cloud computers and **Composio** app connections.
 
-> **Not affiliated with xAI, SpaceX or Cursor/Anysphere.** "Grok" is a trademark of its owner, and this project uses it only to describe what it's modeled on. No code, artwork or private APIs from the original app are included. It talks only to public APIs with your own keys.
+> **Not affiliated with xAI, SpaceX or Cursor/Anysphere.** "Grok" is a trademark of its owner, and this project uses it only to describe what it's modeled on. The UI includes the restored artwork from the original design. See `THIRD_PARTY_NOTICES.md` for artwork attribution. It talks only to public APIs with your own keys.
 
 ## Features
 
@@ -101,4 +101,4 @@ Not built yet:
 
 ## License
 
-[MIT](LICENSE). Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Project code: [MIT](LICENSE). Third-party artwork retains its owners’ rights. Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

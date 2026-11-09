@@ -4,7 +4,7 @@ grokbot-clone is MIT-licensed (see `LICENSE`). It bundles or depends on the thir
 
 ## Lucide icons
 
-The web UI's icons come from [Lucide](https://lucide.dev), via the `lucide-react` package (pinned to 1.61.0 in `web/package.json`). They are rendered in `web/src/components/Icon.tsx`, `web/src/components/config/glyphs.tsx` and `web/src/components/VoiceCallBar.tsx`.
+The web UI's icons come from [Lucide](https://lucide.dev), via the `lucide-react` package (pinned to 1.61.0 in `web/package.json`). The original UI glyphs have been restored; Lucide remains listed here while its dependency is retained.
 
 ```
 ISC License
@@ -48,12 +48,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## App logos
+## Restored UI artwork
 
-The Connect Apps screen and app cards show each app's logo by loading it at runtime from Composio's logo service (`https://logos.composio.dev/api/<toolkit>`). No logos are bundled in this repository. When a logo can't load, the UI shows a letter tile instead. Each logo is a trademark of its owner, and showing one implies no endorsement.
+The original UI artwork is restored from the project's design export: bot silhouettes and eyes (`web/artwork/` and `web/src/avatar/shapes.gen.ts`), UI icons and app tiles (`web/public/assets/`), and the favicon. Artwork originating in xAI/Cursor's Grok Bot app and third-party app logos remains the property of its respective owners; the project's MIT license does not grant rights to that artwork. Inclusion does not imply affiliation or endorsement.
 
-The "Sign in with Google" button shows Google's "G" mark, which is a trademark of Google LLC.
-
-## Original artwork
-
-The bot avatar characters (`web/src/avatar/`), the favicon and `assets/icon.svg` were made for this project. They are drawn from basic geometry and covered by the project's MIT license.
+App logos supplied at runtime by Composio also remain the property of their respective owners. The Google sign-in mark is a trademark of Google LLC.
