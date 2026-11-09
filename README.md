@@ -1,104 +1,161 @@
-<img src="assets/icon.svg" width="64" height="64" alt="">
+<p align="center">
+  <img src="assets/readme-banner.svg" alt="Grokbot Clone — Your team. Their own computers." width="100%">
+</p>
 
-# grokbot-clone
+<p align="center">
+  A self-hosted Grok Bot clone with computer use, connected apps, memory, and voice.<br>
+  Built with the public Grok API, Orgo, and Composio.
+</p>
 
-An open-source take on **always-on AI teammates**: a team of named Bots you give real work to. Each Bot has its own screen on a shared cloud computer, its own memory and routines, and works in your connected apps, asking for approval before risky actions.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#what-you-can-do">Features</a> ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a> ·
+  <a href="#development">Development</a> ·
+  <a href="https://github.com/nickvasilescu/grokbot-clone/issues">Issues</a>
+</p>
 
-It's inspired by xAI's Grok Bot and built entirely on public APIs: the **xAI Grok API** (`grok-4.7`), **Orgo** cloud computers and **Composio** app connections.
+---
 
-> **Not affiliated with xAI, SpaceX or Cursor/Anysphere.** "Grok" is a trademark of its owner, and this project uses it only to describe what it's modeled on. The UI includes the restored artwork from the original design. See `THIRD_PARTY_NOTICES.md` for artwork attribution. It talks only to public APIs with your own keys.
+Give a Bot a job, connect the apps it needs, and follow its work in chat. Each Bot has a name, a look, its own memory, and a desktop you can watch or take over. Bots can work together, run recurring tasks, and talk with you over voice.
 
-## Features
+Grokbot Clone recreates the Grok Bot experience with a runtime you can run and modify yourself. You bring your own API keys; conversations, settings, and agent state live in a local SQLite database.
 
-- **Bots:** create Bots with a name, look, job label and instructions. One is your *primary* Bot. Configure each Bot's skills, memories, routines and thinking effort.
-- **Chat:** streaming Grok 4.7 replies with markdown and citations. A live activity line shows what a Bot is doing instead of raw tool calls. Cards cover approvals, questions and "connect this app". You can stop a turn or start a new conversation.
-- **Its own computer:** one [Orgo](https://orgo.ai) Linux VM per user, with a separate screen (X display) and desktop per Bot. A Bot can browse with Chrome, use a shell, and drive the mouse and keyboard from screenshots.
-  - **Live viewer:** watch a Bot's screen and take control. Watch-only mode is enforced on the server, and the VM password never reaches the browser.
-  - **Auto-sleep:** the VM sleeps when idle and wakes when a Bot needs it.
-  - **Library:** files a Bot saves appear in your Library.
-- **Apps:** sign in with Google and connect 1,000+ apps through [Composio](https://composio.dev). Read-only actions run automatically. Writes such as sending an email pause for approval, and "Always allow" is remembered per action.
-- **Routines:** run on a schedule (cron) or on events from connected apps, e.g. "when a new email from X arrives, summarize it".
-- **Teamwork:** Bots message each other, spin up parallel subagents, and talk in group chats you can @mention. Your primary Bot can check in proactively, or stay quiet when there's nothing to say.
-- **Memory over time:** Bots pick up durable facts after a conversation goes quiet, keep a bounded memory in their prompt with a `recall` tool for the rest, and compact long histories with xAI's `/v1/responses/compact`.
-- **Voice:** realtime voice calls with Grok voice. A lightweight voice agent hands real work to the Bot and reads the result back. Also voice choice and speed, preview, and push-to-talk dictation.
+## What you can do
+
+- **Give every Bot a role.** Set its instructions, appearance, thinking effort, skills, and memories. Make one your primary point of contact.
+- **Put it to work on a computer.** Bots browse websites, run shell commands, and use a full Linux desktop through Orgo. Watch live, take control, and find saved work in the Library.
+- **Connect your apps.** Google sign-in and app connections run through Composio. Read actions run automatically; Composio write actions pause for approval, with an option to remember your choice.
+- **Build a team.** Bots delegate work, start subagents, and join group chats with @mentions.
+- **Keep work moving.** Schedule routines, react to app events, and let your primary Bot check in proactively.
+- **Keep context.** Bots retain durable memories, recall earlier facts, and compact long conversations.
+- **Talk it through.** Realtime voice calls hand tasks to the same Bot runtime. Voice selection, speed, previews, and push-to-talk dictation are included.
+
+Each user's Bots share one Orgo VM, with up to four separate Bot desktops active at once. Idle computers can sleep and wake when needed.
 
 ## Quick start
 
-You need Node 22.22+, an [xAI API key](https://console.x.ai), a [Composio](https://composio.dev) project API key, and an [Orgo](https://orgo.ai) API key with a workspace.
+### 1. Get the project
+
+Install **Node.js 22.22 or newer**, then:
 
 ```bash
-git clone https://github.com/nickvasilescu/grokbot-clone && cd grokbot-clone
-cp .env.example .env    # fill in XAI_API_KEY, COMPOSIO_API_KEY, ORGO_API_KEY, ORGO_WORKSPACE_ID, SESSION_SECRET
-npm install
-npm run dev -w server   # API + agent runtime on :8787
-npm run dev -w web      # UI on :5173 (proxies /api, including WebSockets)
+git clone https://github.com/nickvasilescu/grokbot-clone.git
+cd grokbot-clone
+npm ci
+cp .env.example .env
 ```
 
-Open http://localhost:5173 and sign in:
-- **Sign in with Google** uses Composio's Gmail connection.
-- For local testing, set `DEV_LOGIN=1` and use the email form.
+### 2. Configure your keys
 
-A new account starts with a primary Bot. The first time a Bot uses its computer, your Orgo VM is created, which takes about 10–15 seconds and costs Orgo credits.
+Fill in these values in `.env`:
 
-For production, `npm run build && npm start` serves the built UI from the API server. Set `APP_URL` and `SERVER_URL` to the public URL so OAuth callbacks return to it.
+| Variable | Purpose |
+| --- | --- |
+| `XAI_API_KEY` | Grok text and voice API access |
+| `COMPOSIO_API_KEY` | App connections, tool catalog, and Google sign-in |
+| `ORGO_API_KEY` | Cloud computer access |
+| `ORGO_WORKSPACE_ID` | Workspace in which to create computers |
+| `SESSION_SECRET` | Secret used to sign sessions |
 
-## Architecture
-
-```
-web (React + Vite)  ──HTTP + SSE /api/events──▶  server (Node, Hono, SQLite)
-        │                                          ├─ agent/loop.ts      Grok 4.7 turn loop, per-Bot queue, approvals pause/resume
-        │                                          ├─ agent/tools.ts     computer, browser, shell, files, memory, routines, tasks,
-        │                                          │                     bot-to-bot, subagents, groups, questions + Composio tools
-        │                                          ├─ agent/memory.ts    compaction + memory consolidation
-        │                                          ├─ computer.ts        per-user Orgo VM lifecycle, per-Bot screen leases
-        │                                          ├─ composio.ts        catalog, connections, sessions, Google sign-in
-        │                                          ├─ routines.ts / triggers.ts / proactive.ts   schedules, app events, check-ins
-        │                                          ├─ voice.ts           realtime voice sessions, relay tools, TTS/STT proxy
-        └──WS /api/bots/:id/screen─────────────────▶ vnc.ts             VNC relay with server-side auth and watch-only filtering
-```
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the data model, the transcript and streaming model, approvals, and how Orgo, xAI and Composio fit together. The builder guides [`docs/orgo-builder-guide.md`](docs/orgo-builder-guide.md) and [`docs/xai-and-composio.md`](docs/xai-and-composio.md) summarize the public APIs this project uses.
-
-## Tests
-
-End-to-end tests drive the real UI with Playwright against a running server, so they use real keys and real Orgo, xAI and Composio calls:
+Generate a session secret with:
 
 ```bash
-E2E_EMAIL=you@example.com NODE_PATH=web/node_modules:node_modules node tests/e2e.mjs [baseUrl]
-node tests/voice-call.mjs <outDir> <throwawayBotId>   # two-way voice call with a fake microphone
+openssl rand -hex 32
 ```
 
-`tests/e2e.mjs` covers:
-- creating a Bot and getting a streamed Grok reply
-- a Bot running a shell on its own Orgo screen
-- the computer viewer (watch, take control)
-- search and the apps marketplace
-- a realtime voice session and a group chat
-- bot settings, the Library and Tasks tabs, and app settings
+Paste the result into `SESSION_SECRET`. The example environment file includes the local URLs, computer size, and optional voice settings. The default text model is `grok-4.7`; change `XAI_MODEL` to use another compatible model available to your account.
 
-## Configuration
+### 3. Start the app
 
-See [`.env.example`](.env.example). Optional knobs:
-- **Auto-sleep:** `GROKBOT_IDLE_SUSPEND_MIN`, plus `GROKBOT_IDLE_DRY_RUN` to only log
-- **Compaction budget:** `GROKBOT_COMPACT_TOKENS` / `GROKBOT_COMPACT_CHARS`
-- **Memory:** `GROKBOT_CONSOLIDATE_IDLE_MIN`
-- **Voice models:** `XAI_VOICE_MODEL`, `XAI_STT_MODEL`
-- **Schedulers:** `GROKBOT_NO_SCHEDULER=1` turns them off on extra servers that share a database
+Run the API in one terminal:
 
-## Status
+```bash
+npm run dev -w server
+```
 
-This is an experimental prototype. It hasn't been security-audited:
-- All of a user's Bots share one VM.
-- Secrets stay on the server.
-- Approvals cover Composio write actions.
+Run the frontend in a second terminal:
 
-Not built yet:
-- an in-VM executor ("box host") for faster computer actions
-- skills as `SKILL.md` files with "teach a task" recording
-- an AI pre-check of risky actions against your rules
-- a local-computer daemon
-- meetings
+```bash
+npm run dev -w web
+```
 
-## License
+Open **[localhost:5173](http://localhost:5173)**. The frontend proxies API requests to port `8787`.
 
-Project code: [MIT](LICENSE). Third-party artwork retains its owners’ rights. Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Use **Sign in with Google**, or use the local email form with `DEV_LOGIN=1` (enabled in `.env.example`). Your account starts with a primary Bot. Create another Bot, give it a role, and send it a task.
+
+The first computer task provisions an Orgo VM. Model calls, app actions, and computers use your provider accounts and may incur charges.
+
+### Run a built version
+
+```bash
+npm run build
+npm start
+```
+
+The API serves the built app at **[localhost:8787](http://localhost:8787)**. Set both `APP_URL` and `SERVER_URL` to that address, or to your public HTTPS URL when hosting it, so sign-in redirects return to the right place. Disable `DEV_LOGIN` before exposing the server to other users.
+
+## How it works
+
+| Layer | Implementation |
+| --- | --- |
+| Web app | React, TypeScript, Vite, and Zustand |
+| Server | Node.js, Hono, SQLite, and Server-Sent Events |
+| Agent runtime | Grok Responses API with streaming, tools, memory, and approval handling |
+| Computers | Orgo VM lifecycle and per-Bot desktops; noVNC viewer through a server-side relay |
+| Connected apps | Composio catalog, sessions, authentication, tools, and triggers |
+| Voice | Grok realtime sessions with a relay into the text agent's task loop |
+
+The server owns the agent loop. It builds context, streams a model response, executes tools, pauses for approvals when required, and continues until the task is done. Voice hands work to that same loop.
+
+For the details, read the [architecture guide](docs/ARCHITECTURE.md), [Orgo integration guide](docs/orgo-builder-guide.md), and [Grok and Composio integration guide](docs/xai-and-composio.md).
+
+## Development
+
+```bash
+npm run typecheck       # Check the server and frontend
+npm run build           # Build both workspaces
+```
+
+The main source directories are:
+
+```text
+server/src/     API routes, agent runtime, tools, and integrations
+web/src/        Chat, Bot settings, app connections, computer viewer, and voice
+web/artwork/    Original design assets used to generate Bot avatars
+web/public/     Static UI assets
+tests/          Playwright integration and voice scripts
+docs/           Architecture and integration guides
+```
+
+### Integration tests
+
+With the server running and `DEV_LOGIN=1`:
+
+```bash
+node tests/e2e.mjs http://localhost:8787
+```
+
+The suite creates a temporary Bot and exercises chat, computer tools, the live viewer, search, app connections, voice sessions, groups, and settings. Set `E2E_EMAIL` to choose the test account. It calls real providers and requires Google Chrome at `/usr/bin/google-chrome`.
+
+The separate `tests/voice-call.mjs` script is a development harness for two-way audio. It currently contains machine-specific paths and needs adapting before use on another system.
+
+### Contributing
+
+Bug reports, improvements, and pull requests are welcome. For a bug, include the steps to reproduce, expected behavior, Node version, and relevant logs with secrets removed. For larger changes, open an [issue](https://github.com/nickvasilescu/grokbot-clone/issues) first to discuss the approach.
+
+Keep changes focused, run the typecheck and build, and describe how you verified the affected flow. Never commit API keys, `.env` files, databases, or screenshots containing personal information.
+
+## Project status
+
+This is an experimental project. The core workflows are implemented, but it has not undergone a security audit. Bots within an account share a VM; Composio write approvals do not cover every possible action a Bot can take through its browser or shell.
+
+Planned work includes a faster executor inside each VM, file-based skills and task recording, a local-computer companion, and meeting support.
+
+Configuration options for idle suspension, memory consolidation, and history compaction are described in the [architecture guide](docs/ARCHITECTURE.md). Start with [`.env.example`](.env.example) for connection settings.
+
+## License and credits
+
+Project code is available under the [MIT license](LICENSE). Third-party artwork and trademarks retain their owners' rights; see [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Inspired by Grok Bot. Built with [Grok](https://x.ai), [Orgo](https://orgo.ai), and [Composio](https://composio.dev). This is an independent project, unaffiliated with xAI or Cursor/Anysphere.
