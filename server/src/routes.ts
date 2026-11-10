@@ -44,10 +44,10 @@ function findOrCreateUser(email: string, name?: string, preferId?: string) {
   const id = preferId ?? newId('usr');
   db.prepare('INSERT INTO users(id,email,name,created_at) VALUES (?,?,?,?)').run(id, email, name ?? email.split('@')[0], now());
   createBot(id, {
-    name: 'Shop',
-    label: 'Shopping assistant',
-    description: 'Your Northline Shop concierge. Browse products, build a cart, place demo orders, and get shipping or returns help.',
-    instructions: 'Help shoppers find products, compare options, manage the cart, and answer FAQ with shop_* tools. Keep a friendly Grok-like retail tone. Never invent stock or prices.',
+    name: 'Studio',
+    label: 'Ecommerce design services',
+    description: 'Grokbot for ecommerce design services — product presentation, catalog merchandising, and store/catalog design help against the merchant product data.',
+    instructions: 'You are Grokbot for an ecommerce design studio. Use shop_* tools on the merchant catalog for presentation reviews, lookbook selections, and catalog gaps. Never invent stock or prices. Cart/checkout stage design selections — they are not consumer payments.',
     avatarShape: 'squircle',
     avatarColor: 'green',
     isPrimary: true,

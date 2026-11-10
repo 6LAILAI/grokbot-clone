@@ -1,11 +1,13 @@
 import { db, now } from '../db.js';
 import { newId } from '../lib/ids.js';
-import { FAQ, PRODUCTS, getProduct, money, productSummary, searchFaq, searchProducts, STORE_NAME, CATEGORIES, type Product } from './catalog.js';
+import { catalogStatus, getCategories, getProduct, money, productSummary, searchFaq, searchProducts, storeCurrency, storeName, type Product } from './catalog.js';
+import { ensureCatalogTables } from './catalog-db.js';
 
 let migrated = false;
 
 export function ensureShopTables() {
   if (migrated) return;
+  ensureCatalogTables();
   db.exec(`
     CREATE TABLE IF NOT EXISTS shop_cart (
       user_id TEXT NOT NULL,
@@ -77,11 +79,11 @@ export function getCart(userId: string): CartView {
   }
   const subtotalCents = items.reduce((s, i) => s + i.lineTotalCents, 0);
   return {
-    store: STORE_NAME,
+    store: storeName(),
     items,
     itemCount: items.reduce((s, i) => s + i.qty, 0),
     subtotalCents,
-    subtotal: money(subtotalCents),
+    subtotal: money(subtotalCents, storeCurrency()),
   };
 }
 
@@ -171,7 +173,7 @@ function formatOrder(r: any) {
     status: r.status as OrderStatus,
     items,
     totalCents: r.total_cents as number,
-    total: money(r.total_cents),
+    total: money(r.total_cents, storeCurrency()),
     shippingName: r.shipping_name as string,
     shippingAddress: r.shipping_address as string,
     note: r.note as string,
@@ -207,12 +209,17 @@ export function faqLookup(query: string) {
 }
 
 export function storeMeta() {
+  const status = catalogStatus();
   return {
-    name: STORE_NAME,
-    categories: CATEGORIES,
-    productCount: PRODUCTS.length,
-    currency: 'USD',
-    note: 'Demo catalog — no real payments. Checkout creates mock orders only.',
+    name: status.storeName,
+    categories: getCategories(),
+    productCount: status.productCount,
+    currency: status.currency,
+    source: status.source,
+    lastSyncAt: status.lastSyncAt,
+    note: status.source === 'demo-seed'
+      ? 'Demo seed catalog in use. Import CSV or set CATALOG_FEED_URL for the merchant catalog. Selection bags stage design sheets (no PSP charge).'
+      : 'Serving merchant catalog from SQLite for ecommerce design services. Staged sheets are not consumer checkouts.',
   };
 }
 

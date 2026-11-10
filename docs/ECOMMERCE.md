@@ -1,47 +1,70 @@
-# Ecommerce shopping assistant
+# Grokbot for ecommerce design services
 
-This project extends [nickvasilescu/grokbot-clone](https://github.com/nickvasilescu/grokbot-clone) — an open-source Grok Bot–style runtime (chat UI, agent loop, tools, memory, optional computer/apps/voice) — into a retail shopping Bot.
+Grokbot is the open-source Grok Bot–style runtime (chat UI, agent loop, tools, memory, optional computer/apps/voice), specialized here for **ecommerce design studios/agencies** that help merchants with store and product presentation — not a consumer retail checkout bot.
 
-## Verdict
+## What it is for
 
-**Yes:** upstream is a self-hosted Grok Bot clone (AG-style teammate chat + tools). This slice keeps that architecture and specializes the primary Bot for ecommerce.
+- Product presentation & merchandising critique (titles, blurbs, imagery, category structure)
+- Lookbook / selection bags staged from the **real merchant catalog**
+- Catalog data gaps (missing images, thin copy, odd stock)
+- Store FAQ/policy copy review for design work
+- Optional computer/apps/voice for research and deliverables
 
-## What shipped
+Primary Bot defaults to **Studio**. Cart/checkout APIs stage **design-review sheets** (no PSP charge).
 
-- Mock **Northline Shop** catalog (12 products) + FAQ
-- `shop_*` agent tools: search, product detail, cart, checkout, orders, FAQ
-- In-chat **product / cart / order** cards
-- Details-panel **Shop** browser with demo checkout
-- Retail system prompt when `ECOMMERCE_MODE=1` (default)
-- Default primary Bot renamed to **Shop**
-- Composio + Orgo keys optional; shopping works with `XAI_API_KEY` + `SESSION_SECRET` + `DEV_LOGIN=1`
+## Catalog integration (real products)
 
-## Run
+Canonical store: **SQLite** (`shop_products` / `shop_faq`).
 
-```bash
-npm ci
-cp .env.example .env
-# set XAI_API_KEY and SESSION_SECRET (openssl rand -hex 32)
-npm run dev -w server   # :8787
-npm run dev -w web      # :5173
+| Source | How |
+| --- | --- |
+| **JSON feed** | `CATALOG_FEED_URL` (+ optional `CATALOG_FEED_TOKEN`); boot sync; optional `CATALOG_SYNC_INTERVAL_MS` |
+| **CSV file** | `CATALOG_CSV_PATH`, or `npm run catalog:import -- ./data/your-catalog.csv` |
+| **API** | `POST /api/shop/catalog/import-csv`, `POST /api/shop/catalog/sync` |
+| **Demo seed** | Only if DB empty and no feed/CSV (`CATALOG_SEED_DEMO=1`) |
+
+Samples: `data/catalog.sample.csv`, `data/catalog.sample.json`.
+
+### CSV columns
+
+`id,name,brand,category,price_cents,compare_at_cents,currency,rating,review_count,in_stock,colors,sizes,tags,blurb,image`
+
+### JSON feed shape
+
+```json
+{
+  "store": { "name": "Acme", "currency": "USD" },
+  "products": [ { "id": "sku-1", "name": "...", "price_cents": 1999, "in_stock": 12 } ],
+  "faq": [ { "id": "ship-1", "q": "...", "a": "..." } ]
+}
 ```
 
-Sign in with the email form (`DEV_LOGIN=1`). Ask Shop things like “show bestsellers under $50” or use the side-panel Shop list.
+## Configure
+
+```bash
+cp .env.example .env
+# XAI_API_KEY, SESSION_SECRET, STORE_NAME="Client Catalog"
+# CATALOG_FEED_URL=…  or  CATALOG_CSV_PATH=./data/catalog.sample.csv
+npm ci
+npm run catalog:import -- ./data/catalog.sample.csv
+npm run dev -w server
+npm run dev -w web
+```
+
+## Still needed from the studio / merchant
+
+1. Merchant product feed (HTTPS JSON) **or** CSV export  
+2. Optional feed Bearer token  
+3. Engagement/store label (`STORE_NAME`)  
+4. Optional later: PSP if the studio needs real checkout (not required for design workflows)
 
 ## Key files
 
 | Area | Path |
 | --- | --- |
-| Catalog / FAQ | `server/src/ecommerce/catalog.ts` |
-| Cart / orders | `server/src/ecommerce/cart.ts` |
-| Agent tools | `server/src/ecommerce/tools.ts` |
-| REST | `server/src/routes-shop.ts` |
-| Prompt | `server/src/agent/prompt.ts` |
-| Cards UI | `web/src/components/cards/Cards.tsx` |
-| Shop panel | `web/src/components/ShopPanel.tsx` |
-
-## Open decisions
-
-1. Wire a real catalog / Shopify / Stripe, or keep the mock for demos?
-2. Keep Orgo/Composio as optional, or require them again for parity with upstream?
-3. Brand as “Shopbot” vs keep “Grokbot” naming in more of the UI?
+| Design-service prompt | `server/src/agent/prompt.ts` |
+| Catalog facade | `server/src/ecommerce/catalog.ts` |
+| SQLite products | `server/src/ecommerce/catalog-db.ts` |
+| CSV / feed parsers | `server/src/ecommerce/catalog-import.ts` |
+| Tools | `server/src/ecommerce/tools.ts` |
+| Samples | `data/catalog.sample.*` |

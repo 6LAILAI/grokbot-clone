@@ -74,7 +74,7 @@ function showCart(ctx: ShopToolCtx, cart: ReturnType<typeof getCart>) {
   appendRow(ctx.botId, 'card', {
     type: 'card',
     card: 'cart',
-    title: 'Your cart',
+    title: 'Lookbook selection',
     itemCount: cart.itemCount,
     subtotal: cart.subtotal,
     items: cart.items.map((i) => ({
@@ -91,23 +91,23 @@ function showCart(ctx: ShopToolCtx, cart: ReturnType<typeof getCart>) {
 export const SHOP_TOOLS: ToolDef[] = [
   {
     name: 'shop_store_info',
-    description: 'Get store metadata: name, categories, product count, and demo-payment notice.',
+    description: 'Get merchant catalog metadata: store name, categories, product count, catalog source, and staging note (for ecommerce design work).',
     parameters: obj({}),
     activity: 'working',
-    label: 'Checking the store',
+    label: 'Checking the catalog',
     impl: async () => ({ output: json(storeMeta()), summary: 'Store info' }),
   },
   {
     name: 'shop_search_products',
-    description: 'Search or browse the product catalog. Use a free-text query and optional category/tag filters. Shows product cards in chat.',
+    description: 'Search or browse the merchant product catalog for design/merchandising review. Optional category/tag filters. Shows product cards in chat.',
     parameters: obj({
-      query: { type: 'string', description: 'Search text, e.g. "hoodie", "gift under 50", "desk"' },
-      category: { type: 'string', description: 'Optional exact category: Apparel, Accessories, Bags, Footwear, Home' },
+      query: { type: 'string', description: 'Search text, e.g. "hoodie", "hero image gaps", "desk"' },
+      category: { type: 'string', description: 'Optional exact category' },
       tag: { type: 'string', description: 'Optional tag like bestseller, gift, travel, basics' },
       max: { type: 'integer', description: 'Max results (default 6, max 12)' },
     }),
     activity: 'searching_web',
-    label: 'Searching the catalog',
+    label: 'Reviewing catalog products',
     impl: async (a, ctx) => {
       const max = Math.max(1, Math.min(12, Number(a.max) || 6));
       const products = browseCatalog(String(a.query ?? ''), a.category ? String(a.category) : undefined, a.tag ? String(a.tag) : undefined, max);
@@ -118,10 +118,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_get_product',
-    description: 'Get full details for one product by id (e.g. nl-tee-01).',
+    description: 'Get full details for one merchant product by id (for presentation critique or lookbook staging).',
     parameters: obj({ product_id: { type: 'string' } }, ['product_id']),
     activity: 'working',
-    label: 'Looking up a product',
+    label: 'Inspecting a product',
     impl: async (a, ctx) => {
       const product = productDetail(String(a.product_id));
       if (!product) return { output: json({ error: 'Product not found' }), summary: 'Not found' };
@@ -131,10 +131,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_get_cart',
-    description: 'Show the shopper’s current cart contents and subtotal.',
+    description: 'Show the staged lookbook/selection bag (curated SKUs for a design review) and subtotal.',
     parameters: obj({}),
     activity: 'working',
-    label: 'Checking the cart',
+    label: 'Checking the selection bag',
     impl: async (_a, ctx) => {
       const cart = getCart(ctx.userId);
       showCart(ctx, cart);
@@ -143,15 +143,15 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_add_to_cart',
-    description: 'Add a product to the cart. Optional color/size variant when the product supports them.',
+    description: 'Stage a product into the lookbook/selection bag for a client presentation. Optional color/size variant.',
     parameters: obj({
       product_id: { type: 'string' },
-      qty: { type: 'integer', description: 'Quantity to add (default 1)' },
+      qty: { type: 'integer', description: 'Quantity to stage (default 1)' },
       color: { type: 'string' },
       size: { type: 'string' },
     }, ['product_id']),
     activity: 'working',
-    label: 'Adding to cart',
+    label: 'Staging a product',
     impl: async (a, ctx) => {
       try {
         const variant: Record<string, string> = {};
@@ -167,10 +167,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_update_cart',
-    description: 'Set the quantity for a cart line. Use qty 0 to remove the item.',
+    description: 'Set quantity for a staged selection line. Use qty 0 to remove it from the lookbook bag.',
     parameters: obj({ product_id: { type: 'string' }, qty: { type: 'integer' } }, ['product_id', 'qty']),
     activity: 'working',
-    label: 'Updating the cart',
+    label: 'Updating the selection bag',
     impl: async (a, ctx) => {
       try {
         const cart = updateCartQty(ctx.userId, String(a.product_id), Number(a.qty));
@@ -183,10 +183,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_clear_cart',
-    description: 'Remove every item from the cart.',
+    description: 'Clear the staged lookbook/selection bag.',
     parameters: obj({}),
     activity: 'working',
-    label: 'Clearing the cart',
+    label: 'Clearing the selection bag',
     impl: async (_a, ctx) => {
       const cart = clearCart(ctx.userId);
       showCart(ctx, cart);
@@ -195,14 +195,14 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_checkout',
-    description: 'Place a mock order from the current cart. No real payment is charged. Collect a shipping name/address when possible.',
+    description: 'Save the staged selection bag as a named design-review order sheet. No payment is charged. Optional client/label fields via shipping_name/note.',
     parameters: obj({
-      shipping_name: { type: 'string' },
-      shipping_address: { type: 'string' },
-      note: { type: 'string' },
+      shipping_name: { type: 'string', description: 'Optional client or lookbook label' },
+      shipping_address: { type: 'string', description: 'Optional project notes / delivery context' },
+      note: { type: 'string', description: 'Design brief or selection notes' },
     }),
     activity: 'working',
-    label: 'Placing the order',
+    label: 'Saving staged sheet',
     impl: async (a, ctx) => {
       try {
         const order = placeOrder(ctx.userId, {
@@ -213,24 +213,24 @@ export const SHOP_TOOLS: ToolDef[] = [
         appendRow(ctx.botId, 'card', {
           type: 'card',
           card: 'order',
-          title: 'Order placed',
+          title: 'Staged design sheet',
           orderId: order.id,
           status: order.status,
           total: order.total,
           itemCount: Array.isArray(order.items) ? order.items.length : 0,
         });
-        return { output: json({ ok: true, order, notice: 'Demo checkout only — no payment charged.' }), summary: `Order ${order.id}` };
+        return { output: json({ ok: true, order, notice: 'Staged design sheet only — no payment charged.' }), summary: `Sheet ${order.id}` };
       } catch (e) {
-        return { output: json({ ok: false, error: (e as Error).message }), summary: 'Checkout failed' };
+        return { output: json({ ok: false, error: (e as Error).message }), summary: 'Staging failed' };
       }
     },
   },
   {
     name: 'shop_list_orders',
-    description: 'List recent orders for this shopper.',
+    description: 'List recent staged design-review sheets for this engagement.',
     parameters: obj({ limit: { type: 'integer' } }),
     activity: 'working',
-    label: 'Checking orders',
+    label: 'Checking staged sheets',
     impl: async (a, ctx) => {
       const orders = listOrders(ctx.userId, Math.max(1, Math.min(20, Number(a.limit) || 10)));
       return { output: json({ orders }), summary: `${orders.length} orders` };
@@ -238,10 +238,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_get_order',
-    description: 'Get one order by id, including status and line items.',
+    description: 'Get one staged design sheet by id, including status and line items.',
     parameters: obj({ order_id: { type: 'string' } }, ['order_id']),
     activity: 'working',
-    label: 'Looking up an order',
+    label: 'Looking up a staged sheet',
     impl: async (a, ctx) => {
       const order = getOrder(ctx.userId, String(a.order_id));
       if (!order) return { output: json({ error: 'Order not found' }), summary: 'Not found' };
@@ -259,10 +259,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_advance_order_demo',
-    description: 'Demo-only: advance an order one step along placed → packing → shipped → delivered for support walkthroughs.',
+    description: 'Demo-only: advance a staged sheet along placed → packing → shipped → delivered (useful when simulating fulfillment copy for store design).',
     parameters: obj({ order_id: { type: 'string' } }, ['order_id']),
     activity: 'working',
-    label: 'Updating order status',
+    label: 'Updating sheet status',
     impl: async (a, ctx) => {
       try {
         const order = advanceOrderDemo(ctx.userId, String(a.order_id));
@@ -283,10 +283,10 @@ export const SHOP_TOOLS: ToolDef[] = [
   },
   {
     name: 'shop_faq',
-    description: 'Look up store FAQ answers (shipping, returns, payments, sizing, tracking).',
-    parameters: obj({ query: { type: 'string', description: 'Customer question or keywords' } }, ['query']),
+    description: 'Look up merchant store FAQ / policy copy (shipping, returns, payments, sizing) for design or content review.',
+    parameters: obj({ query: { type: 'string', description: 'Topic or keywords' } }, ['query']),
     activity: 'working',
-    label: 'Checking FAQ',
+    label: 'Checking store FAQ copy',
     impl: async (a) => {
       const hits = faqLookup(String(a.query));
       return { output: json({ hits }), summary: hits.length ? hits[0].q : 'No FAQ hit' };

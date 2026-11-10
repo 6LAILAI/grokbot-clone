@@ -1,0 +1,6 @@
+id,name,brand,category,price_cents,compare_at_cents,currency,rating,review_count,in_stock,colors,sizes,tags,blurb,image
+sku-tee-01,Everyday Cotton Tee,Northline,Apparel,2800,3600,USD,4.6,214,48,"ink|sand|bone","XS|S|M|L|XL","bestseller|basics|gift",Soft midweight tee with a clean crew neck.,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=640&q=80
+sku-hoodie-02,Trail Fleece Hoodie,Northline,Apparel,7800,,USD,4.8,97,22,"forest|slate","S|M|L|XL","outerwear|gift",Brushed fleece hoodie with kangaroo pocket.,https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=640&q=80
+sku-cap-03,Soft Peak Cap,Northline,Accessories,3200,,USD,4.4,61,35,"black|olive",,"accessories|gift",Unstructured cap with tonal embroidery.,https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=640&q=80
+sku-bottle-04,Daypack Bottle 750ml,Field & Form,Home,3600,,USD,4.7,188,60,"steel|matte black",,"hydration|travel",Insulated bottle that keeps drinks cold 24h.,https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=640&q=80
+sku-bag-06,Compact Crossbody,Northline,Bags,8900,11000,USD,4.9,76,18,"cognac|black",,"bags|travel|bestseller",Slim crossbody with RFID-safe pocket.,https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=640&q=80

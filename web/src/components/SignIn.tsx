@@ -27,8 +27,8 @@ export function SignIn() {
         <div className="signin__hero">
           <BotAvatar shape="squircle" color="green" size={84} />
         </div>
-        <h1 className="signin__title">Shopbot</h1>
-        <p className="signin__sub">A Grok-style shopping assistant for browse, cart, orders, and support — built on the grokbot-clone runtime.</p>
+        <h1 className="signin__title">Grokbot</h1>
+        <p className="signin__sub">Grokbot for ecommerce design services — catalog merchandising, product presentation, and store design help with real merchant product data.</p>
         {googleLogin && (
           <a className="btn btn--primary signin__google" href="/api/auth/google/start">
             <GoogleG /> Sign in with Google

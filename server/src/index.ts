@@ -21,9 +21,13 @@ import { shopApi } from './routes-shop.js';
 import { startIdleWatcher } from './idle.js';
 import { startMemoryConsolidation } from './agent/memory.js';
 import { ensureShopTables } from './ecommerce/cart.js';
+import { bootstrapCatalog, catalogStatus } from './ecommerce/catalog.js';
 
 if (!desSelfTest()) throw new Error('DES self-test failed');
+if (!env.xaiKey) throw new Error('Missing env XAI_API_KEY');
+if (!env.sessionSecret) throw new Error('Missing env SESSION_SECRET');
 ensureShopTables();
+await bootstrapCatalog();
 initSubagents();
 initRooms();
 
@@ -34,6 +38,7 @@ app.get('/api/health', (c) => c.json({
   ecommerce: env.ecommerceMode,
   composio: !!env.composioKey,
   orgo: !!env.orgoKey,
+  catalog: catalogStatus(),
 }));
 app.route('/api/checkins', checkinsApi);
 app.route('/api/rooms', roomsApi);

@@ -14,7 +14,12 @@ import {
   storeMeta,
   updateCartQty,
 } from './ecommerce/cart.js';
-import { CATEGORIES } from './ecommerce/catalog.js';
+import {
+  catalogStatus,
+  getCategories,
+  importCsvText,
+  syncCatalogFeed,
+} from './ecommerce/catalog.js';
 
 /** REST surface for the shopping side panel + chat quick actions. */
 export const shopApi = new Hono<AuthVars>();
@@ -23,7 +28,9 @@ shopApi.use('*', requireUser);
 
 shopApi.get('/meta', (c) => c.json(storeMeta()));
 
-shopApi.get('/categories', (c) => c.json({ categories: CATEGORIES }));
+shopApi.get('/catalog/status', (c) => c.json(catalogStatus()));
+
+shopApi.get('/categories', (c) => c.json({ categories: getCategories() }));
 
 shopApi.get('/products', (c) => {
   const q = c.req.query('q') ?? '';
@@ -89,3 +96,26 @@ shopApi.get('/orders/:id', (c) => {
 });
 
 shopApi.get('/faq', (c) => c.json({ hits: faqLookup(c.req.query('q') ?? '') }));
+
+/** Replace catalog from pasted CSV text (merchant admin / operator). */
+shopApi.post('/catalog/import-csv', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const csv = typeof body.csv === 'string' ? body.csv : typeof body.text === 'string' ? body.text : '';
+  if (!csv.trim()) return c.json({ error: 'Provide { csv: "..." }' }, 400);
+  try {
+    const result = importCsvText(csv, { replaceAll: body.replaceAll !== false });
+    return c.json({ ok: true, ...result, status: catalogStatus() });
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});
+
+/** Pull CATALOG_FEED_URL into SQLite. */
+shopApi.post('/catalog/sync', async (c) => {
+  try {
+    const result = await syncCatalogFeed({ replaceAll: true });
+    return c.json({ ok: true, ...result, status: catalogStatus() });
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
+});

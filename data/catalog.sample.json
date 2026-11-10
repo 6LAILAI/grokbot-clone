@@ -1,0 +1,48 @@
+{
+  "store": {
+    "name": "Sample Merchant",
+    "currency": "USD"
+  },
+  "products": [
+    {
+      "id": "sku-tee-01",
+      "name": "Everyday Cotton Tee",
+      "brand": "Northline",
+      "category": "Apparel",
+      "price_cents": 2800,
+      "compare_at_cents": 3600,
+      "currency": "USD",
+      "rating": 4.6,
+      "review_count": 214,
+      "in_stock": 48,
+      "colors": ["ink", "sand", "bone"],
+      "sizes": ["XS", "S", "M", "L", "XL"],
+      "tags": ["bestseller", "basics"],
+      "blurb": "Soft midweight tee with a clean crew neck.",
+      "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=640&q=80"
+    },
+    {
+      "id": "sku-hoodie-02",
+      "name": "Trail Fleece Hoodie",
+      "brand": "Northline",
+      "category": "Apparel",
+      "price": 78.0,
+      "currency": "USD",
+      "rating": 4.8,
+      "in_stock": 22,
+      "colors": ["forest", "slate"],
+      "sizes": ["S", "M", "L", "XL"],
+      "tags": ["outerwear", "gift"],
+      "description": "Brushed fleece hoodie with kangaroo pocket.",
+      "image_url": "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=640&q=80"
+    }
+  ],
+  "faq": [
+    {
+      "id": "ship-1",
+      "q": "How long does shipping take?",
+      "a": "Standard shipping is 3–5 business days.",
+      "tags": ["shipping"]
+    }
+  ]
+}

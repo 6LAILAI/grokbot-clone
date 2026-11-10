@@ -5,7 +5,10 @@ dist/
 !.env.example
 *.db
 *.db-*
-data/
+data/*
+!data/catalog.sample.csv
+!data/catalog.sample.json
+!data/README.md
 .DS_Store
 
 # Local-only material (not part of the open-source repo)

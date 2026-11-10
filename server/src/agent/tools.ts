@@ -467,7 +467,7 @@ const CORE_TOOLS: ToolDef[] = [
   },
 ];
 
-/** Core Bot tools plus ecommerce shopping tools (always available in retail mode). */
+/** Core Bot tools plus ecommerce design-services catalog tools (when ECOMMERCE_MODE is on). */
 export const TOOLS: ToolDef[] = [
   ...(env.ecommerceMode ? (SHOP_TOOLS as ToolDef[]) : []),
   ...CORE_TOOLS,

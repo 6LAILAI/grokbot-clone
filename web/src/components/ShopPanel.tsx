@@ -70,7 +70,7 @@ export function ShopPanel() {
     setError(null);
     try {
       const { order } = await api.shopCheckout();
-      setNote(`Order ${order.id} placed (${order.total}) — demo only`);
+      setNote(`Staged sheet ${order.id} (${order.total}) — design review, no charge`);
       const { cart: next } = await api.shopCart();
       setCart(next as CartView);
     } catch (e) {
@@ -83,7 +83,7 @@ export function ShopPanel() {
   return (
     <section className="shop-panel">
       <div className="section-label section-label--row">
-        <span>Shop</span>
+        <span>Catalog</span>
         <button type="button" className="link-btn link-btn--small" onClick={() => load(q)}>Refresh</button>
       </div>
       <form className="shop-panel__search" onSubmit={search}>
@@ -91,8 +91,8 @@ export function ShopPanel() {
           className="text-input"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search products"
-          aria-label="Search products"
+          placeholder="Search merchant catalog"
+          aria-label="Search merchant catalog"
         />
         <button type="submit" className="btn btn--secondary" disabled={busy === 'search'}>
           {busy === 'search' ? '…' : 'Go'}
@@ -101,11 +101,11 @@ export function ShopPanel() {
       <div className="shop-panel__cart panel-card">
         <div className="shop-panel__cart-head">
           <Icon name="bag" size={14} opacity={0.6} />
-          <span>{cart ? `${cart.itemCount} in cart · ${cart.subtotal}` : 'Cart'}</span>
+          <span>{cart ? `${cart.itemCount} staged · ${cart.subtotal}` : 'Lookbook bag'}</span>
         </div>
         {cart && cart.items.length > 0 && (
           <button type="button" className="btn btn--primary shop-panel__checkout" disabled={!!busy} onClick={checkout}>
-            {busy === 'checkout' ? 'Placing…' : 'Checkout (demo)'}
+            {busy === 'checkout' ? 'Saving…' : 'Save staged sheet'}
           </button>
         )}
       </div>
@@ -117,7 +117,7 @@ export function ShopPanel() {
               <div className="shop-panel__name">{p.name}</div>
               <div className="shop-panel__meta">{p.brand} · {p.price}</div>
               <button type="button" className="btn btn--secondary btn--tiny" disabled={!!busy || p.inStock < 1} onClick={() => add(p.id)}>
-                {busy === p.id ? 'Adding…' : 'Add'}
+                {busy === p.id ? 'Staging…' : 'Stage'}
               </button>
             </div>
           </div>

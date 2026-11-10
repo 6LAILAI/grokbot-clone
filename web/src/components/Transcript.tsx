@@ -198,11 +198,11 @@ export function Transcript({ bot, rows, live, loaded }: Props) {
   );
 }
 
-const SHOP_PROMPTS = [
-  'Show me bestsellers under $50',
-  'I need a gift for someone who loves travel',
-  'What’s in my cart?',
-  'What’s your return policy?',
+const DESIGN_PROMPTS = [
+  'Review presentation for our bestsellers',
+  'Suggest stronger titles and blurbs for Apparel',
+  'Stage a spring lookbook selection',
+  'Where are catalog gaps (copy, images, stock)?',
 ];
 
 function EmptyChat({ bot }: { bot: Bot }) {
@@ -211,9 +211,9 @@ function EmptyChat({ bot }: { bot: Bot }) {
     <div className="empty-chat">
       <BotAvatarFor bot={bot} size={72} />
       <div className="empty-chat__title">{bot.name}</div>
-      <div className="empty-chat__sub">{bot.description || (bot.mode === 'teammate' ? 'A Bot for the whole team. Hand it a task and it will see it through.' : 'Your personal shopping assistant. Ask about products, cart, orders, or returns.')}</div>
+      <div className="empty-chat__sub">{bot.description || (bot.mode === 'teammate' ? 'A Bot for the whole team. Hand it a task and it will see it through.' : 'Ecommerce design-services Bot. Review the merchant catalog, stage lookbooks, and improve product presentation.')}</div>
       <div className="empty-chat__prompts">
-        {SHOP_PROMPTS.map((p) => (
+        {DESIGN_PROMPTS.map((p) => (
           <button key={p} type="button" className="empty-chat__prompt" onClick={() => send(p)}>{p}</button>
         ))}
       </div>

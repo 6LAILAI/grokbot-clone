@@ -260,7 +260,7 @@ export function OrderCard({ body }: { body: Card<'order'> }) {
         <span className={`order-card__status is-${body.status}`}>{body.status}</span>
         <span className="order-card__total">{body.total}</span>
       </div>
-      <div className="order-card__meta">{body.itemCount} line{body.itemCount === 1 ? '' : 's'} · demo checkout (no charge)</div>
+      <div className="order-card__meta">{body.itemCount} line{body.itemCount === 1 ? '' : 's'} · staged design sheet (no charge)</div>
     </div>
   );
 }

@@ -6,7 +6,9 @@
     "dev": "tsx watch --env-file=../.env src/index.ts",
     "start": "node --env-file=../.env dist/index.js",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "catalog:import": "tsx src/ecommerce/import-cli.ts",
+    "catalog:sync": "tsx src/ecommerce/import-cli.ts sync"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

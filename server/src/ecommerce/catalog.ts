@@ -1,271 +1,63 @@
-/** Mock retail catalog + FAQ for the shopping assistant. No external APIs. */
+/**
+ * Merchant catalog facade.
+ * Source of truth is SQLite (`shop_products` / `shop_faq`), loaded from:
+ * - CATALOG_FEED_URL (JSON feed)
+ * - CATALOG_CSV_PATH (CSV file on boot / CLI)
+ * - optional demo seed when empty and CATALOG_SEED_DEMO=1
+ */
 
-export interface Product {
-  id: string;
-  name: string;
-  brand: string;
-  category: string;
-  priceCents: number;
-  compareAtCents?: number;
-  currency: 'USD';
-  rating: number;
-  reviewCount: number;
-  inStock: number;
-  colors?: string[];
-  sizes?: string[];
-  tags: string[];
-  blurb: string;
-  image: string;
-}
+import { env } from '../env.js';
+import {
+  categoriesFromDb,
+  ensureCatalogTables,
+  getMeta,
+  getProductRow,
+  listAllProducts,
+  listFaq,
+  productCount,
+  setMeta,
+  upsertFaq,
+  upsertProducts,
+} from './catalog-db.js';
+import { fetchCatalogFeed, parseCatalogCsv, readCatalogCsvFile } from './catalog-import.js';
+import { DEMO_FAQ, DEMO_PRODUCTS, DEMO_STORE_NAME } from './demo-seed.js';
+import type { CatalogSource, FaqEntry, Product } from './types.js';
 
-export const STORE_NAME = 'Northline Shop';
+export type { Product, FaqEntry, CatalogSource };
 
-export const PRODUCTS: Product[] = [
-  {
-    id: 'nl-tee-01',
-    name: 'Everyday Cotton Tee',
-    brand: 'Northline',
-    category: 'Apparel',
-    priceCents: 2800,
-    compareAtCents: 3600,
-    currency: 'USD',
-    rating: 4.6,
-    reviewCount: 214,
-    inStock: 48,
-    colors: ['ink', 'sand', 'bone'],
-    sizes: ['XS', 'S', 'M', 'L', 'XL'],
-    tags: ['bestseller', 'basics', 'gift'],
-    blurb: 'Soft midweight tee with a clean crew neck. Built for daily wear.',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=640&q=80',
-  },
-  {
-    id: 'nl-hoodie-02',
-    name: 'Trail Fleece Hoodie',
-    brand: 'Northline',
-    category: 'Apparel',
-    priceCents: 7800,
-    currency: 'USD',
-    rating: 4.8,
-    reviewCount: 97,
-    inStock: 22,
-    colors: ['forest', 'slate'],
-    sizes: ['S', 'M', 'L', 'XL'],
-    tags: ['outerwear', 'gift'],
-    blurb: 'Brushed fleece hoodie with kangaroo pocket and reinforced cuffs.',
-    image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=640&q=80',
-  },
-  {
-    id: 'nl-cap-03',
-    name: 'Soft Peak Cap',
-    brand: 'Northline',
-    category: 'Accessories',
-    priceCents: 3200,
-    currency: 'USD',
-    rating: 4.4,
-    reviewCount: 61,
-    inStock: 35,
-    colors: ['black', 'olive'],
-    tags: ['accessories', 'gift'],
-    blurb: 'Unstructured cap with a soft peak and tonal embroidery.',
-    image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=640&q=80',
-  },
-  {
-    id: 'nl-bottle-04',
-    name: 'Daypack Bottle 750ml',
-    brand: 'Field & Form',
-    category: 'Home',
-    priceCents: 3600,
-    currency: 'USD',
-    rating: 4.7,
-    reviewCount: 188,
-    inStock: 60,
-    colors: ['steel', 'matte black'],
-    tags: ['hydration', 'travel'],
-    blurb: 'Insulated stainless bottle that keeps drinks cold for 24 hours.',
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=640&q=80',
-  },
-  {
-    id: 'nl-mug-05',
-    name: 'Stoneware Desk Mug',
-    brand: 'Field & Form',
-    category: 'Home',
-    priceCents: 2400,
-    currency: 'USD',
-    rating: 4.5,
-    reviewCount: 132,
-    inStock: 40,
-    colors: ['clay', 'cream'],
-    tags: ['desk', 'gift'],
-    blurb: 'Hand-glazed 12oz mug with a wide, stable base.',
-    image: 'https://images.unsplash.com/photo-1514228742587-6b1558fcc036?w=640&q=80',
-  },
-  {
-    id: 'nl-bag-06',
-    name: 'Compact Crossbody',
-    brand: 'Northline',
-    category: 'Bags',
-    priceCents: 8900,
-    compareAtCents: 11000,
-    currency: 'USD',
-    rating: 4.9,
-    reviewCount: 76,
-    inStock: 18,
-    colors: ['cognac', 'black'],
-    tags: ['bags', 'travel', 'bestseller'],
-    blurb: 'Slim crossbody with padded strap and RFID-safe pocket.',
-    image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=640&q=80',
-  },
-  {
-    id: 'nl-shoe-07',
-    name: 'City Walker Sneaker',
-    brand: 'Pace Co',
-    category: 'Footwear',
-    priceCents: 12800,
-    currency: 'USD',
-    rating: 4.3,
-    reviewCount: 203,
-    inStock: 27,
-    colors: ['white', 'navy'],
-    sizes: ['7', '8', '9', '10', '11', '12'],
-    tags: ['footwear', 'bestseller'],
-    blurb: 'Lightweight daily sneaker with cushioned insole and gum sole.',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=640&q=80',
-  },
-  {
-    id: 'nl-sock-08',
-    name: 'Merino Crew Socks (3-pack)',
-    brand: 'Pace Co',
-    category: 'Apparel',
-    priceCents: 2200,
-    currency: 'USD',
-    rating: 4.7,
-    reviewCount: 154,
-    inStock: 90,
-    sizes: ['S/M', 'L/XL'],
-    tags: ['basics', 'gift'],
-    blurb: 'Breathable merino blend that stays soft wash after wash.',
-    image: 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=640&q=80',
-  },
-  {
-    id: 'nl-lamp-09',
-    name: 'Arc Desk Lamp',
-    brand: 'Field & Form',
-    category: 'Home',
-    priceCents: 6400,
-    currency: 'USD',
-    rating: 4.6,
-    reviewCount: 89,
-    inStock: 15,
-    colors: ['brass', 'matte black'],
-    tags: ['desk', 'lighting'],
-    blurb: 'Adjustable LED desk lamp with warm/cool modes and USB-C charge port.',
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=640&q=80',
-  },
-  {
-    id: 'nl-candle-10',
-    name: 'Cedar Room Candle',
-    brand: 'Hearth',
-    category: 'Home',
-    priceCents: 2900,
-    currency: 'USD',
-    rating: 4.8,
-    reviewCount: 241,
-    inStock: 55,
-    tags: ['gift', 'home'],
-    blurb: 'Soy wax candle with cedar, smoke, and a soft citrus top note.',
-    image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?w=640&q=80',
-  },
-  {
-    id: 'nl-watch-11',
-    name: 'Field Watch 38mm',
-    brand: 'Pace Co',
-    category: 'Accessories',
-    priceCents: 18900,
-    currency: 'USD',
-    rating: 4.5,
-    reviewCount: 58,
-    inStock: 9,
-    colors: ['silver', 'black'],
-    tags: ['accessories', 'gift'],
-    blurb: 'Sapphire crystal field watch with quick-release leather strap.',
-    image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=640&q=80',
-  },
-  {
-    id: 'nl-tote-12',
-    name: 'Market Canvas Tote',
-    brand: 'Northline',
-    category: 'Bags',
-    priceCents: 4200,
-    currency: 'USD',
-    rating: 4.4,
-    reviewCount: 119,
-    inStock: 44,
-    colors: ['natural', 'navy'],
-    tags: ['bags', 'everyday'],
-    blurb: 'Heavy canvas tote with interior zip pocket and reinforced handles.',
-    image: 'https://images.unsplash.com/photo-1590874103328-eac70a638e13?w=640&q=80',
-  },
-];
-
-export interface FaqEntry {
-  id: string;
-  q: string;
-  a: string;
-  tags: string[];
-}
-
-export const FAQ: FaqEntry[] = [
-  {
-    id: 'ship-1',
-    q: 'How long does shipping take?',
-    a: 'Standard shipping is 3–5 business days in the continental US. Express is 1–2 business days. Orders placed after 2pm PT ship the next business day.',
-    tags: ['shipping', 'delivery'],
-  },
-  {
-    id: 'ship-2',
-    q: 'Do you ship internationally?',
-    a: 'This demo store ships within the US only. International shipping is on the roadmap.',
-    tags: ['shipping', 'international'],
-  },
-  {
-    id: 'return-1',
-    q: 'What is the return policy?',
-    a: 'Unworn items can be returned within 30 days of delivery for a full refund to the original payment method. Final-sale and personalized items are excluded.',
-    tags: ['returns', 'refunds'],
-  },
-  {
-    id: 'pay-1',
-    q: 'What payment methods do you accept?',
-    a: 'In this demo, checkout creates a mock order — no real payment is charged. In production you would connect Stripe or your PSP.',
-    tags: ['payment', 'checkout'],
-  },
-  {
-    id: 'track-1',
-    q: 'How do I track my order?',
-    a: 'Ask the shopping assistant for your order id, or say “where is my order”. Demo tracking shows status only (placed → packing → shipped → delivered).',
-    tags: ['tracking', 'orders'],
-  },
-  {
-    id: 'size-1',
-    q: 'How do sizes run?',
-    a: 'Apparel is true to size. If you are between sizes, size up for hoodies and size down for tees if you prefer a closer fit.',
-    tags: ['sizing', 'apparel'],
-  },
-];
+let bootstrapped = false;
 
 export function money(cents: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
 }
 
+export function storeName(): string {
+  return getMeta('store_name') || env.storeName || DEMO_STORE_NAME;
+}
+
+export function storeCurrency(): string {
+  return getMeta('store_currency') || env.storeCurrency || 'USD';
+}
+
+export function catalogSource(): CatalogSource {
+  return (getMeta('catalog_source') as CatalogSource) || 'sqlite';
+}
+
 export function getProduct(id: string) {
-  return PRODUCTS.find((p) => p.id === id);
+  ensureCatalogTables();
+  return getProductRow(id);
+}
+
+export function allProducts(): Product[] {
+  ensureCatalogTables();
+  return listAllProducts();
 }
 
 export function searchProducts(query: string, opts: { category?: string; tag?: string; max?: number } = {}) {
   const max = opts.max ?? 8;
   const q = query.trim().toLowerCase();
   const words = q ? q.split(/\s+/).filter(Boolean) : [];
-  let list = PRODUCTS.slice();
+  let list = allProducts();
   if (opts.category) {
     const c = opts.category.toLowerCase();
     list = list.filter((p) => p.category.toLowerCase() === c);
@@ -290,15 +82,17 @@ export function searchProducts(query: string, opts: { category?: string; tag?: s
   return list.slice(0, max);
 }
 
-export function searchFaq(query: string, max = 4) {
+export function searchFaq(query: string, max = 4): FaqEntry[] {
+  const faq = listFaq();
   const q = query.trim().toLowerCase();
-  if (!q) return FAQ.slice(0, max);
+  if (!q) return faq.slice(0, max);
   const words = q.split(/\s+/).filter(Boolean);
-  return FAQ.map((f) => {
-    const hay = `${f.q} ${f.a} ${f.tags.join(' ')}`.toLowerCase();
-    const score = words.reduce((s, w) => s + (hay.includes(w) ? 1 : 0), 0);
-    return { f, score };
-  })
+  return faq
+    .map((f) => {
+      const hay = `${f.q} ${f.a} ${f.tags.join(' ')}`.toLowerCase();
+      const score = words.reduce((s, w) => s + (hay.includes(w) ? 1 : 0), 0);
+      return { f, score };
+    })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .map((x) => x.f)
@@ -311,9 +105,9 @@ export function productSummary(p: Product) {
     name: p.name,
     brand: p.brand,
     category: p.category,
-    price: money(p.priceCents),
+    price: money(p.priceCents, p.currency || storeCurrency()),
     priceCents: p.priceCents,
-    compareAt: p.compareAtCents ? money(p.compareAtCents) : undefined,
+    compareAt: p.compareAtCents ? money(p.compareAtCents, p.currency || storeCurrency()) : undefined,
     rating: p.rating,
     reviewCount: p.reviewCount,
     inStock: p.inStock,
@@ -325,4 +119,108 @@ export function productSummary(p: Product) {
   };
 }
 
-export const CATEGORIES = [...new Set(PRODUCTS.map((p) => p.category))].sort();
+export function getCategories() {
+  return categoriesFromDb();
+}
+
+/** @deprecated use getCategories() — kept for older imports */
+export const CATEGORIES = [] as string[];
+
+export function catalogStatus() {
+  ensureCatalogTables();
+  return {
+    storeName: storeName(),
+    currency: storeCurrency(),
+    source: catalogSource(),
+    productCount: productCount(),
+    faqCount: listFaq().length,
+    lastSyncAt: getMeta('last_sync_at'),
+    feedUrlConfigured: !!env.catalogFeedUrl,
+    csvPathConfigured: !!env.catalogCsvPath,
+    seedDemo: env.catalogSeedDemo,
+  };
+}
+
+export function importProducts(products: Product[], opts: { replaceAll?: boolean; source: CatalogSource; store?: string; currency?: string; faq?: FaqEntry[] }) {
+  ensureCatalogTables();
+  const count = upsertProducts(products, { replaceAll: opts.replaceAll });
+  if (opts.faq?.length) upsertFaq(opts.faq, { replaceAll: opts.replaceAll });
+  if (opts.store) setMeta('store_name', opts.store);
+  if (opts.currency) setMeta('store_currency', opts.currency);
+  setMeta('catalog_source', opts.source);
+  setMeta('last_sync_at', new Date().toISOString());
+  return { productCount: count, source: opts.source };
+}
+
+export function importCsvText(text: string, opts: { replaceAll?: boolean } = {}) {
+  const products = parseCatalogCsv(text);
+  if (!products.length) throw new Error('No products found in CSV');
+  return importProducts(products, { replaceAll: opts.replaceAll ?? true, source: 'csv' });
+}
+
+export function importCsvFile(filePath: string, opts: { replaceAll?: boolean } = {}) {
+  const products = readCatalogCsvFile(filePath);
+  if (!products.length) throw new Error(`No products found in ${filePath}`);
+  return importProducts(products, { replaceAll: opts.replaceAll ?? true, source: 'csv' });
+}
+
+export async function syncCatalogFeed(opts: { replaceAll?: boolean } = {}) {
+  if (!env.catalogFeedUrl) throw new Error('CATALOG_FEED_URL is not set');
+  const feed = await fetchCatalogFeed(env.catalogFeedUrl, env.catalogFeedToken || undefined);
+  if (!feed.products.length) throw new Error('Catalog feed returned zero products');
+  return importProducts(feed.products, {
+    replaceAll: opts.replaceAll ?? true,
+    source: 'feed',
+    store: feed.store?.name || env.storeName,
+    currency: feed.store?.currency || env.storeCurrency,
+    faq: feed.faq,
+  });
+}
+
+function seedDemoIfEmpty() {
+  if (productCount() > 0) return false;
+  if (!env.catalogSeedDemo) return false;
+  importProducts(DEMO_PRODUCTS, {
+    replaceAll: true,
+    source: 'demo-seed',
+    store: env.storeName || DEMO_STORE_NAME,
+    currency: env.storeCurrency || 'USD',
+    faq: DEMO_FAQ,
+  });
+  console.log(`[catalog] seeded ${DEMO_PRODUCTS.length} demo products (set CATALOG_SEED_DEMO=0 and import CSV/feed for production)`);
+  return true;
+}
+
+/** Load CSV / feed / demo into SQLite. Safe to call multiple times. */
+export async function bootstrapCatalog() {
+  if (bootstrapped) return catalogStatus();
+  ensureCatalogTables();
+  try {
+    if (env.catalogFeedUrl) {
+      const r = await syncCatalogFeed({ replaceAll: true });
+      console.log(`[catalog] synced feed → ${r.productCount} products`);
+    } else if (env.catalogCsvPath) {
+      const r = importCsvFile(env.catalogCsvPath, { replaceAll: true });
+      console.log(`[catalog] imported CSV ${env.catalogCsvPath} → ${r.productCount} products`);
+    } else {
+      seedDemoIfEmpty();
+    }
+  } catch (e) {
+    console.warn('[catalog] bootstrap failed:', (e as Error).message);
+    seedDemoIfEmpty();
+  }
+  bootstrapped = true;
+  if (env.catalogSyncIntervalMs > 0 && env.catalogFeedUrl) {
+    setInterval(() => {
+      syncCatalogFeed({ replaceAll: true })
+        .then((r) => console.log(`[catalog] periodic sync → ${r.productCount} products`))
+        .catch((err) => console.warn('[catalog] periodic sync failed', (err as Error).message));
+    }, env.catalogSyncIntervalMs).unref?.();
+  }
+  return catalogStatus();
+}
+
+// Back-compat aliases used by older modules
+export const STORE_NAME = env.storeName || DEMO_STORE_NAME;
+export const PRODUCTS: Product[] = [];
+export const FAQ: FaqEntry[] = [];
