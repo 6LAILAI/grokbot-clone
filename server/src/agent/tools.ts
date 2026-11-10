@@ -12,6 +12,8 @@ import { createSubagent, deleteSubagent, listSubagents } from './subagents.js';
 import { createRoom, postToRoom } from './rooms.js';
 import type { ActivityKind } from '../types.js';
 import { Cron } from 'croner';
+import { SHOP_TOOLS, shopToolMap } from '../ecommerce/tools.js';
+import { env } from '../env.js';
 
 export interface ToolCtx {
   userId: string;
@@ -65,7 +67,7 @@ function botByName(userId: string, name: string) {
   return db.prepare('SELECT * FROM bots WHERE user_id=? AND lower(name)=lower(?)').get(userId, name.trim()) as any;
 }
 
-export const TOOLS: ToolDef[] = [
+const CORE_TOOLS: ToolDef[] = [
   {
     name: 'computer_screenshot',
     description: "Take a screenshot of your own computer screen (a Linux desktop that only you use). Use this before acting on the screen.",
@@ -465,11 +467,19 @@ export const TOOLS: ToolDef[] = [
   },
 ];
 
+/** Core Bot tools plus ecommerce shopping tools (always available in retail mode). */
+export const TOOLS: ToolDef[] = [
+  ...(env.ecommerceMode ? (SHOP_TOOLS as ToolDef[]) : []),
+  ...CORE_TOOLS,
+];
+
 export const toolMap = new Map(TOOLS.map((t) => [t.name, t]));
 
 export function functionSchemas() {
   return TOOLS.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.parameters }));
 }
+
+export { shopToolMap };
 
 // ---------- approvals policy ----------
 

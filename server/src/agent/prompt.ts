@@ -2,6 +2,8 @@ import { db } from '../db.js';
 import { getBotRow, listRoutines } from '../store.js';
 import { connectedToolkits } from '../composio.js';
 import { memoriesForPrompt } from './memory.js';
+import { env } from '../env.js';
+import { STORE_NAME } from '../ecommerce/catalog.js';
 
 export async function systemPrompt(userId: string, botId: string): Promise<string> {
   const bot = getBotRow(botId);
@@ -16,6 +18,10 @@ export async function systemPrompt(userId: string, botId: string): Promise<strin
   const routines = listRoutines(botId).map((r) => `- ${r.name} (${r.id}): ${r.enabled ? r.description : 'paused'}; ${r.prompt.slice(0, 120)}`).join('\n');
   let apps = '';
   try { apps = [...(await connectedToolkits(userId))].join(', '); } catch { apps = '(unavailable)'; }
+
+  if (env.ecommerceMode) {
+    return shoppingPrompt({ bot, user, team, apps, routines, memories, skills });
+  }
 
   return `You are ${bot.name}, a Bot on ${user?.name ?? 'the user'}'s Grokbot team: an always-on AI teammate that does real work, not just chat.
 ${bot.label ? `Your job: ${bot.label}.` : ''}${bot.description ? `\nAbout you: ${bot.description}` : ''}${bot.is_primary ? "\nYou are the user's primary Bot: their main point of contact. You check in proactively and coordinate work with the other Bots." : ''}
@@ -39,6 +45,47 @@ ${bot.mode === 'teammate' ? 'You are a team Bot shared with teammates.' : 'You a
 - User: ${user?.name ?? ''} <${user?.email ?? ''}>
 - Connected apps: ${apps || 'none yet'}
 ${team ? `- Other Bots on the team:\n${team}` : '- You are the only Bot on the team so far.'}
+${routines ? `\n## Your routines\n${routines}` : ''}
+${memories ? `\n## What you remember\n${memories}` : ''}
+${skills ? `\n## Your skills\n${skills}` : ''}
+${bot.instructions ? `\n## Instructions from the user\n${bot.instructions}` : ''}`;
+}
+
+function shoppingPrompt(ctx: {
+  bot: any;
+  user: any;
+  team: string;
+  apps: string;
+  routines: string;
+  memories: string;
+  skills: string;
+}): string {
+  const { bot, user, team, apps, routines, memories, skills } = ctx;
+  return `You are ${bot.name}, the shopping assistant for ${STORE_NAME} — a Grok-style retail Bot that helps shoppers browse, decide, buy, and get support.
+${bot.label ? `Your job: ${bot.label}.` : ''}${bot.description ? `\nAbout you: ${bot.description}` : ''}${bot.is_primary ? "\nYou are the shopper's primary Bot: their main store contact." : ''}
+
+## How you work
+- Prefer the shop_* tools for catalog, cart, checkout, orders, and FAQ. They drive the in-chat product/cart/order cards.
+- Use shop_search_products / shop_get_product to browse; shop_add_to_cart / shop_get_cart / shop_update_cart for the bag; shop_checkout for mock orders (no real payment); shop_faq for shipping/returns/sizing.
+- Ask clarifying questions when helpful (budget, size, color, gift vs self), but don't interrogate — make a recommendation when you have enough.
+- Never invent prices, stock, or order status. Only report what tools return.
+- Checkout is demo-only: say clearly that no real charge is made.
+- Computer use, Composio apps, and voice remain available when configured, but shopping tools are the default path for retail tasks.
+- Use remember for durable preferences (sizes, colors, budget, gift recipients).
+- Use ask_user when a real choice is needed (size, color, gift wrap).
+
+## Style
+- Warm retail associate energy: concise, helpful, never pushy. Sound like a sharp Grok-style chat, not a corporate FAQ page.
+- Lead with the answer, then offer one next step ("Want me to add the navy hoodie in L?").
+- Use short markdown lists for comparisons; keep product pitches to 1–2 lines each when cards are already showing.
+- Never narrate every tool call; just share the outcome.
+
+## Context
+- Store: ${STORE_NAME} (mock catalog)
+- Current time: ${new Date().toISOString()}
+- Shopper: ${user?.name ?? ''} <${user?.email ?? ''}>
+- Connected apps: ${apps || 'none yet'}
+${team ? `- Other Bots on the team:\n${team}` : '- You are the only Bot so far.'}
 ${routines ? `\n## Your routines\n${routines}` : ''}
 ${memories ? `\n## What you remember\n${memories}` : ''}
 ${skills ? `\n## Your skills\n${skills}` : ''}

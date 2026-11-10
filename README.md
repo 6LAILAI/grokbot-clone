@@ -3,8 +3,9 @@
 </p>
 
 <p align="center">
-  A self-hosted Grok Bot clone with computer use, connected apps, memory, and voice.<br>
-  Built with the public Grok API, Orgo, and Composio.
+  A self-hosted Grok Bot clone — extended here as an ecommerce shopping assistant<br>
+  with catalog search, cart/orders, FAQ, and Grok-like chat. Built on the public Grok API
+  (Orgo + Composio remain optional).
 </p>
 
 <p align="center">
@@ -21,17 +22,29 @@ Give a Bot a job, connect the apps it needs, and follow its work in chat. Each B
 
 Grokbot Clone recreates the Grok Bot experience with a runtime you can run and modify yourself. You bring your own API keys; conversations, settings, and agent state live in a local SQLite database.
 
+## Ecommerce shopping slice (this fork)
+
+New accounts get a primary **Shop** Bot with a retail system prompt and `shop_*` tools backed by a mock Northline catalog (no payment processor). Chat shows product / cart / order cards; the details panel includes a Shop browser. Checkout creates demo orders only.
+
+| Need | Env |
+| --- | --- |
+| Chat + shopping tools | `XAI_API_KEY`, `SESSION_SECRET`, `DEV_LOGIN=1` |
+| Google sign-in / connected apps | `COMPOSIO_API_KEY` (optional) |
+| Computer use | `ORGO_API_KEY` + `ORGO_WORKSPACE_ID` (optional) |
+| Classic teammate prompt | `ECOMMERCE_MODE=0` |
+
 ## What you can do
 
+- **Shop with a Bot.** Browse/search products, manage a cart, place mock orders, and answer shipping/returns FAQ via tools.
 - **Give every Bot a role.** Set its instructions, appearance, thinking effort, skills, and memories. Make one your primary point of contact.
-- **Put it to work on a computer.** Bots browse websites, run shell commands, and use a full Linux desktop through Orgo. Watch live, take control, and find saved work in the Library.
-- **Connect your apps.** Google sign-in and app connections run through Composio. Read actions run automatically; Composio write actions pause for approval, with an option to remember your choice.
+- **Put it to work on a computer.** Bots browse websites, run shell commands, and use a full Linux desktop through Orgo (optional). Watch live, take control, and find saved work in the Library.
+- **Connect your apps.** Google sign-in and app connections run through Composio when configured. Read actions run automatically; Composio write actions pause for approval.
 - **Build a team.** Bots delegate work, start subagents, and join group chats with @mentions.
 - **Keep work moving.** Schedule routines, react to app events, and let your primary Bot check in proactively.
 - **Keep context.** Bots retain durable memories, recall earlier facts, and compact long conversations.
-- **Talk it through.** Realtime voice calls hand tasks to the same Bot runtime. Voice selection, speed, previews, and push-to-talk dictation are included.
+- **Talk it through.** Realtime voice calls hand tasks to the same Bot runtime when xAI voice is available.
 
-Each user's Bots share one Orgo VM, with up to four separate Bot desktops active at once. Idle computers can sleep and wake when needed.
+Each user's Bots can share one Orgo VM (optional), with up to four separate Bot desktops active at once.
 
 ## Quick start
 
@@ -48,15 +61,21 @@ cp .env.example .env
 
 ### 2. Configure your keys
 
-Fill in these values in `.env`:
+Minimum for the shopping assistant:
 
 | Variable | Purpose |
 | --- | --- |
-| `XAI_API_KEY` | Grok text and voice API access |
-| `COMPOSIO_API_KEY` | App connections, tool catalog, and Google sign-in |
-| `ORGO_API_KEY` | Cloud computer access |
-| `ORGO_WORKSPACE_ID` | Workspace in which to create computers |
+| `XAI_API_KEY` | Grok text (and voice) API access |
 | `SESSION_SECRET` | Secret used to sign sessions |
+| `DEV_LOGIN` | Set `1` for local email sign-in without Composio |
+
+Optional:
+
+| Variable | Purpose |
+| --- | --- |
+| `COMPOSIO_API_KEY` | App connections + Google sign-in |
+| `ORGO_API_KEY` / `ORGO_WORKSPACE_ID` | Cloud computer access |
+| `ECOMMERCE_MODE` | Default `1`; set `0` for classic teammate prompt |
 
 Generate a session secret with:
 
@@ -64,7 +83,7 @@ Generate a session secret with:
 openssl rand -hex 32
 ```
 
-Paste the result into `SESSION_SECRET`. The example environment file includes the local URLs, computer size, and optional voice settings. The default text model is `grok-4.7`; change `XAI_MODEL` to use another compatible model available to your account.
+Paste the result into `SESSION_SECRET`. Never commit real keys. The default text model is `grok-4.7`; change `XAI_MODEL` if your account uses another model.
 
 ### 3. Start the app
 

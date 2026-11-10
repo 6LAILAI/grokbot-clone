@@ -434,8 +434,8 @@ function landedNote(request: string, replies: Row[], after: Row[]): string {
   const text = replies.map((r) => (r.body.type === 'message' ? r.body.text : '')).join('\n\n').trim();
   const waiting = after
     .map((r) => r.body)
-    .filter((b) => b.type === 'card' && b.status === 'pending')
-    .map((b) => (b.type === 'card' ? (b.card === 'approval' ? b.title : b.card === 'question' ? `a question: ${b.question}` : b.card === 'connect' ? `connecting ${b.toolkitName}` : 'a draft to review') : ''));
+    .filter((b): b is Extract<typeof b, { type: 'card' }> => b.type === 'card' && (b.card === 'approval' || b.card === 'question' || b.card === 'connect' || b.card === 'draft') && b.status === 'pending')
+    .map((b) => (b.card === 'approval' ? b.title : b.card === 'question' ? `a question: ${b.question}` : b.card === 'connect' ? `connecting ${b.toolkitName}` : 'a draft to review'));
   return `The work you handed off just finished. Request: "${clip(request, 200)}". ${text ? `Your text agent replied:\n"""\n${clip(text, 1800)}\n"""` : 'It finished without a written reply.'}${waiting.length ? `\nStill waiting on the user in the chat: ${waiting.join('; ')}.` : ''}`;
 }
 

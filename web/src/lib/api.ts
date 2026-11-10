@@ -25,7 +25,7 @@ export interface AppsResponse { apps: Toolkit[]; connected: string[]; categories
 export interface RoomMember { id: string; name: string; label: string; avatarShape: string; avatarColor: string }
 
 export const api = {
-  me: () => req<{ user: User | null; devLogin: boolean }>('GET', '/auth/me'),
+  me: () => req<{ user: User | null; devLogin: boolean; googleLogin?: boolean; ecommerce?: boolean }>('GET', '/auth/me'),
   devLogin: (email: string, name?: string) => req<{ ok: true }>('POST', '/auth/dev', { email, name }),
   logout: () => req<{ ok: true }>('POST', '/auth/logout'),
 
@@ -54,6 +54,14 @@ export const api = {
   roomMembers: (id: string) => req<{ members: RoomMember[] }>('GET', `/rooms/${id}/members`),
   setRoomMembers: (id: string, botIds: string[]) => req<{ ok: true; members: string[] }>('PUT', `/rooms/${id}/members`, { botIds }),
   createRoom: (name: string, botIds: string[]) => req<{ id: string }>('POST', '/rooms', { name, botIds }),
+
+  shopMeta: () => req<{ name: string; categories: string[]; productCount: number; note: string }>('GET', '/shop/meta'),
+  shopProducts: (q = '', category = '') => req<{ products: unknown[] }>('GET', `/shop/products?q=${encodeURIComponent(q)}&category=${encodeURIComponent(category)}`),
+  shopCart: () => req<{ cart: unknown }>('GET', '/shop/cart'),
+  shopAdd: (productId: string, qty = 1, variant?: { color?: string; size?: string }) =>
+    req<{ cart: unknown }>('POST', '/shop/cart/items', { productId, qty, ...variant }),
+  shopCheckout: (body: { shippingName?: string; shippingAddress?: string; note?: string } = {}) =>
+    req<{ order: { id: string; total: string; status: string } }>('POST', '/shop/checkout', body),
 };
 
 /** Open a Composio redirect in a centered popup. */

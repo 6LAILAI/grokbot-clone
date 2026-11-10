@@ -1,13 +1,22 @@
 {
   "name": "grokbot",
   "private": true,
-  "description": "Grokbot: internal reverse-engineering clone of xAI Grok Bot. Internal research use only; do not distribute.",
-  "workspaces": ["server", "web"],
+  "description": "Ecommerce shopping assistant built on the open-source grokbot-clone Grok Bot runtime.",
+  "workspaces": [
+    "server",
+    "web"
+  ],
   "scripts": {
     "dev": "npm run dev -w server & npm run dev -w web",
     "build": "npm run build -w web && npm run build -w server",
     "start": "npm run start -w server",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w web"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.23.1": true
+  }
 }

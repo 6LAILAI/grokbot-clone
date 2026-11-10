@@ -43,7 +43,15 @@ function findOrCreateUser(email: string, name?: string, preferId?: string) {
   if (existing) return { id: existing.id as string, isNew: false };
   const id = preferId ?? newId('usr');
   db.prepare('INSERT INTO users(id,email,name,created_at) VALUES (?,?,?,?)').run(id, email, name ?? email.split('@')[0], now());
-  createBot(id, { name: 'Quinn', label: 'Chief of Staff', description: 'Your main point of contact. Checks in proactively and coordinates work with your other Bots.', avatarShape: 'blob', avatarColor: 'black', isPrimary: true });
+  createBot(id, {
+    name: 'Shop',
+    label: 'Shopping assistant',
+    description: 'Your Northline Shop concierge. Browse products, build a cart, place demo orders, and get shipping or returns help.',
+    instructions: 'Help shoppers find products, compare options, manage the cart, and answer FAQ with shop_* tools. Keep a friendly Grok-like retail tone. Never invent stock or prices.',
+    avatarShape: 'squircle',
+    avatarColor: 'green',
+    isPrimary: true,
+  });
   return { id, isNew: true };
 }
 
@@ -51,10 +59,13 @@ function findOrCreateUser(email: string, name?: string, preferId?: string) {
 
 api.get('/auth/me', (c) => {
   const user = userFromCookieHeader(c.req.header('cookie'));
-  return c.json({ user, devLogin: env.devLogin });
+  return c.json({ user, devLogin: env.devLogin, googleLogin: !!env.composioKey, ecommerce: env.ecommerceMode });
 });
 
 api.get('/auth/google/start', async (c) => {
+  if (!env.composioKey) {
+    return c.json({ error: 'Google sign-in needs COMPOSIO_API_KEY. Use DEV_LOGIN=1 for local email sign-in.' }, 503);
+  }
   const attemptId = newId('login');
   const provisional = newId('usr');
   const cb = `${env.serverUrl}/api/auth/google/callback?attempt=${attemptId}`;

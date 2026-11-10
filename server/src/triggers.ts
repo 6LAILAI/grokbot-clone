@@ -1,6 +1,7 @@
 import { db, now } from './db.js';
-import { composio } from './composio.js';
+import { composio, composioEnabled } from './composio.js';
 import { appendRow } from './store.js';
+import { env } from './env.js';
 
 /**
  * Event routines: Composio triggers (e.g. GMAIL_NEW_GMAIL_MESSAGE, SLACK_RECEIVE_MESSAGE,
@@ -24,18 +25,23 @@ export async function initTriggers(enqueue: (botId: string, t: any) => void) {
   migrate();
   enqueueFn = enqueue;
   const count = (db.prepare("SELECT COUNT(*) n FROM routines WHERE schedule LIKE 'event:%'").get() as any).n;
+  if (!composioEnabled()) {
+    console.log(`[triggers] ${count} event routine(s); Composio disabled (no COMPOSIO_API_KEY)`);
+    return;
+  }
   if (count > 0) await ensureSubscribed();
   console.log(`[triggers] ${count} event routine(s)`);
 }
 
 async function ensureSubscribed() {
   if (subscribed) return;
+  if (!env.composioKey) return;
   subscribed = true;
   try {
     await composio.triggers.subscribe(
       (data: any) => onTrigger(data),
       undefined,
-      (err) => console.warn('[triggers] subscription error', JSON.stringify(err).slice(0, 300)),
+      (err: unknown) => console.warn('[triggers] subscription error', JSON.stringify(err).slice(0, 300)),
     );
     console.log('[triggers] realtime subscription active');
   } catch (e) {

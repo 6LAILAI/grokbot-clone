@@ -118,6 +118,45 @@ export type CardBody =
       text: string;
       approvalId: string;
       status: 'pending' | 'sent' | 'discarded';
+    }
+  | {
+      type: 'card';
+      card: 'products';
+      title: string;
+      products: {
+        id: string;
+        name: string;
+        brand: string;
+        price: string;
+        image: string;
+        blurb: string;
+        inStock: number;
+        rating: number;
+      }[];
+    }
+  | {
+      type: 'card';
+      card: 'cart';
+      title: string;
+      itemCount: number;
+      subtotal: string;
+      items: {
+        productId: string;
+        name: string;
+        qty: number;
+        lineTotal: string;
+        image: string;
+        variant: Record<string, string>;
+      }[];
+    }
+  | {
+      type: 'card';
+      card: 'order';
+      title: string;
+      orderId: string;
+      status: string;
+      total: string;
+      itemCount: number;
     };
 
 export interface EventBody {

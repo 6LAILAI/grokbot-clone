@@ -195,6 +195,76 @@ export function DraftCard({ body }: { body: Card<'draft'> }) {
   );
 }
 
+export function ProductsCard({ body }: { body: Card<'products'> }) {
+  return (
+    <div className="card products-card">
+      <div className="products-card__title">{body.title}</div>
+      <div className="products-card__grid">
+        {body.products.map((p) => (
+          <div key={p.id} className="product-tile">
+            <div className="product-tile__media">
+              <img src={p.image} alt="" loading="lazy" />
+            </div>
+            <div className="product-tile__body">
+              <div className="product-tile__brand">{p.brand}</div>
+              <div className="product-tile__name">{p.name}</div>
+              <div className="product-tile__meta">
+                <span className="product-tile__price">{p.price}</span>
+                <span className="product-tile__rating">{p.rating.toFixed(1)}★</span>
+              </div>
+              <div className="product-tile__blurb">{p.blurb}</div>
+              <div className={`product-tile__stock${p.inStock < 5 ? ' is-low' : ''}`}>
+                {p.inStock > 0 ? `${p.inStock} in stock` : 'Out of stock'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function CartCard({ body }: { body: Card<'cart'> }) {
+  return (
+    <div className="card cart-card">
+      <div className="cart-card__head">
+        <div className="cart-card__title">{body.title}</div>
+        <div className="cart-card__sub">{body.itemCount} item{body.itemCount === 1 ? '' : 's'} · {body.subtotal}</div>
+      </div>
+      {body.items.length === 0 ? (
+        <div className="cart-card__empty">Cart is empty</div>
+      ) : (
+        <ul className="cart-card__list">
+          {body.items.map((i) => (
+            <li key={i.productId} className="cart-card__row">
+              <img className="cart-card__thumb" src={i.image} alt="" loading="lazy" />
+              <div className="cart-card__info">
+                <div className="cart-card__name">{i.name}</div>
+                <div className="cart-card__qty">Qty {i.qty}{Object.keys(i.variant || {}).length ? ` · ${Object.values(i.variant).join(' / ')}` : ''}</div>
+              </div>
+              <div className="cart-card__line">{i.lineTotal}</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function OrderCard({ body }: { body: Card<'order'> }) {
+  return (
+    <div className="card order-card">
+      <div className="order-card__title">{body.title}</div>
+      <div className="order-card__id">{body.orderId}</div>
+      <div className="order-card__row">
+        <span className={`order-card__status is-${body.status}`}>{body.status}</span>
+        <span className="order-card__total">{body.total}</span>
+      </div>
+      <div className="order-card__meta">{body.itemCount} line{body.itemCount === 1 ? '' : 's'} · demo checkout (no charge)</div>
+    </div>
+  );
+}
+
 export function CardRow({ row }: { row: Row }) {
   const b = row.body;
   if (b.type !== 'card') return null;
@@ -203,6 +273,9 @@ export function CardRow({ row }: { row: Row }) {
     case 'question': return <QuestionCard row={row} body={b} />;
     case 'connect': return <ConnectCard row={row} body={b} />;
     case 'draft': return <DraftCard body={b} />;
+    case 'products': return <ProductsCard body={b} />;
+    case 'cart': return <CartCard body={b} />;
+    case 'order': return <OrderCard body={b} />;
     default: return null;
   }
 }

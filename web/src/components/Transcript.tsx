@@ -7,6 +7,7 @@ import { ActivityLine } from './ActivityLine';
 import { CardRow } from './cards/Cards';
 import { Icon } from './Icon';
 import { Markdown } from './Markdown';
+import { api } from '../lib/api';
 
 type Item =
   | { kind: 'divider'; key: string; ts: number }
@@ -197,12 +198,25 @@ export function Transcript({ bot, rows, live, loaded }: Props) {
   );
 }
 
+const SHOP_PROMPTS = [
+  'Show me bestsellers under $50',
+  'I need a gift for someone who loves travel',
+  'What’s in my cart?',
+  'What’s your return policy?',
+];
+
 function EmptyChat({ bot }: { bot: Bot }) {
+  const send = (text: string) => { void api.send(bot.id, text); };
   return (
     <div className="empty-chat">
       <BotAvatarFor bot={bot} size={72} />
       <div className="empty-chat__title">{bot.name}</div>
-      <div className="empty-chat__sub">{bot.description || (bot.mode === 'teammate' ? 'A Bot for the whole team. Hand it a task and it will see it through.' : 'Your personal assistant. Hand it a task and it will see it through.')}</div>
+      <div className="empty-chat__sub">{bot.description || (bot.mode === 'teammate' ? 'A Bot for the whole team. Hand it a task and it will see it through.' : 'Your personal shopping assistant. Ask about products, cart, orders, or returns.')}</div>
+      <div className="empty-chat__prompts">
+        {SHOP_PROMPTS.map((p) => (
+          <button key={p} type="button" className="empty-chat__prompt" onClick={() => send(p)}>{p}</button>
+        ))}
+      </div>
     </div>
   );
 }

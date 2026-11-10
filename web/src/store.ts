@@ -9,6 +9,7 @@ interface Transcript { generation: number; bySeq: Record<number, Row>; loaded: b
 interface State {
   user: User | null;
   devLogin: boolean;
+  googleLogin: boolean;
   authChecked: boolean;
 
   bots: Bot[];
@@ -47,6 +48,7 @@ const lsSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } ca
 export const useStore = create<State>((set, get) => ({
   user: null,
   devLogin: false,
+  googleLogin: false,
   authChecked: false,
   bots: [],
   live: {},
@@ -63,8 +65,8 @@ export const useStore = create<State>((set, get) => ({
 
   async checkAuth() {
     try {
-      const { user, devLogin } = await api.me();
-      set({ user, devLogin, authChecked: true });
+      const { user, devLogin, googleLogin } = await api.me();
+      set({ user, devLogin, googleLogin: !!googleLogin, authChecked: true });
     } catch {
       set({ user: null, authChecked: true });
     }

@@ -12,6 +12,7 @@ import { useConfigUI } from '../configStore';
 import { Glyph } from './config/glyphs';
 import { LibraryTab } from './config/LibraryTab';
 import { BotTasks } from './config/TasksView';
+import { ShopPanel } from './ShopPanel';
 
 export function computerStatusText(c: ComputerState | null): string {
   switch (c?.status) {
@@ -151,6 +152,7 @@ export function DetailsPanel() {
         </div>
         {tab === 'activity' ? (
           <div className="details__sections">
+            <ShopPanel />
             <section>
               <div className="section-label section-label--row">
                 <span>Upcoming</span>

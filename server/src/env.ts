@@ -4,6 +4,10 @@ function req(name: string): string {
   return v;
 }
 
+function opt(name: string): string {
+  return process.env[name]?.trim() ?? '';
+}
+
 export const env = {
   port: Number(process.env.PORT ?? 8787),
   appUrl: process.env.APP_URL ?? 'http://localhost:5173',
@@ -11,8 +15,10 @@ export const env = {
   serverUrl: process.env.SERVER_URL ?? `http://localhost:${process.env.PORT ?? 8787}`,
   xaiKey: req('XAI_API_KEY'),
   xaiModel: process.env.XAI_MODEL ?? 'grok-4.7',
-  composioKey: req('COMPOSIO_API_KEY'),
-  orgoKey: req('ORGO_API_KEY'),
+  /** Optional: app connections + Google sign-in. Shopping tools work without it. */
+  composioKey: opt('COMPOSIO_API_KEY'),
+  /** Optional: cloud computer use. Shopping assistant works without it. */
+  orgoKey: opt('ORGO_API_KEY'),
   /** Orgo workspace that holds every user's box. */
   orgoWorkspaceId: process.env.ORGO_WORKSPACE_ID ?? '',
   /** Orgo box size for new users. */
@@ -22,4 +28,6 @@ export const env = {
   sessionSecret: req('SESSION_SECRET'),
   devLogin: process.env.DEV_LOGIN === '1',
   dbPath: process.env.DB_PATH ?? new URL('../../data/grokbot.db', import.meta.url).pathname,
+  /** Prefer shopping tools + retail prompt tone (default on). */
+  ecommerceMode: process.env.ECOMMERCE_MODE !== '0',
 };

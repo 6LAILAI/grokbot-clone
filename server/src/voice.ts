@@ -98,7 +98,14 @@ function recentMessages(botId: string, count: number) {
     const m = messageText(body);
     if (m) out.push({ seq: r.seq, at: r.created_at, who: m.role === 'user' ? `User${m.via ? ` (${m.via})` : ''}` : b.name, text: m.text });
     else if (body.type === 'event' && body.event === 'voice-call' && body.call?.phase === 'ended') out.push({ seq: r.seq, at: r.created_at, who: 'Call record', text: body.text });
-    else if (body.type === 'card' && body.status === 'pending') out.push({ seq: r.seq, at: r.created_at, who: 'Waiting for the user', text: body.card === 'approval' ? body.title : body.card === 'question' ? body.question : body.card === 'connect' ? `Connect ${body.toolkitName}` : 'Draft to review' });
+    else if (body.type === 'card' && (body.card === 'approval' || body.card === 'question' || body.card === 'connect' || body.card === 'draft') && body.status === 'pending') {
+      out.push({
+        seq: r.seq,
+        at: r.created_at,
+        who: 'Waiting for the user',
+        text: body.card === 'approval' ? body.title : body.card === 'question' ? body.question : body.card === 'connect' ? `Connect ${body.toolkitName}` : 'Draft to review',
+      });
+    }
     if (out.length >= count) break;
   }
   return out.reverse();

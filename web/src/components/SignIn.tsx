@@ -6,6 +6,7 @@ import { TrafficLights } from './Sidebar';
 
 export function SignIn() {
   const devLogin = useStore((s) => s.devLogin);
+  const googleLogin = useStore((s) => s.googleLogin);
   const checkAuth = useStore((s) => s.checkAuth);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -24,20 +25,25 @@ export function SignIn() {
       <div className="signin__chrome"><TrafficLights /></div>
       <div className="signin__card">
         <div className="signin__hero">
-          <BotAvatar shape="blob" color="black" size={84} />
+          <BotAvatar shape="squircle" color="green" size={84} />
         </div>
-        <h1 className="signin__title">Grokbot</h1>
-        <p className="signin__sub">AI teammates with their own computers. Hand them a task and they get it done.</p>
-        <a className="btn btn--primary signin__google" href="/api/auth/google/start">
-          <GoogleG /> Sign in with Google
-        </a>
+        <h1 className="signin__title">Shopbot</h1>
+        <p className="signin__sub">A Grok-style shopping assistant for browse, cart, orders, and support — built on the grokbot-clone runtime.</p>
+        {googleLogin && (
+          <a className="btn btn--primary signin__google" href="/api/auth/google/start">
+            <GoogleG /> Sign in with Google
+          </a>
+        )}
         {devLogin && (
           <form className="signin__dev" onSubmit={dev}>
-            <div className="signin__divider"><span>Dev sign-in</span></div>
+            {googleLogin && <div className="signin__divider"><span>Dev sign-in</span></div>}
             <input className="text-input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email" />
             <input className="text-input" placeholder="Name (optional)" value={name} onChange={(e) => setName(e.target.value)} aria-label="Name" />
-            <button type="submit" className="btn btn--secondary" disabled={busy}>{busy ? 'Signing in…' : 'Continue with email'}</button>
+            <button type="submit" className={`btn ${googleLogin ? 'btn--secondary' : 'btn--primary'}`} disabled={busy}>{busy ? 'Signing in…' : 'Continue with email'}</button>
           </form>
+        )}
+        {!googleLogin && !devLogin && (
+          <p className="signin__sub">Set DEV_LOGIN=1 or COMPOSIO_API_KEY in .env to sign in.</p>
         )}
         {error && <div className="card__error signin__error">{error}</div>}
         <p className="signin__foot">Open source. Not affiliated with xAI.</p>

@@ -17,17 +17,27 @@ import { roomsApi } from './routes-rooms.js';
 import { enqueue } from './agent/loop.js';
 import { desSelfTest } from './lib/des.js';
 import { configApi } from './routes-config.js';
+import { shopApi } from './routes-shop.js';
 import { startIdleWatcher } from './idle.js';
 import { startMemoryConsolidation } from './agent/memory.js';
+import { ensureShopTables } from './ecommerce/cart.js';
 
 if (!desSelfTest()) throw new Error('DES self-test failed');
+ensureShopTables();
 initSubagents();
 initRooms();
 
 const app = new Hono();
-app.get('/api/health', (c) => c.json({ ok: true, model: env.xaiModel }));
+app.get('/api/health', (c) => c.json({
+  ok: true,
+  model: env.xaiModel,
+  ecommerce: env.ecommerceMode,
+  composio: !!env.composioKey,
+  orgo: !!env.orgoKey,
+}));
 app.route('/api/checkins', checkinsApi);
 app.route('/api/rooms', roomsApi);
+app.route('/api/shop', shopApi);
 app.route('/api', api);
 app.route('/api', configApi);
 
